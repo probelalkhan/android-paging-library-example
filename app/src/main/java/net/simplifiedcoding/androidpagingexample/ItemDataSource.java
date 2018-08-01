@@ -46,7 +46,20 @@ public class ItemDataSource extends PageKeyedDataSource<Integer, Item> {
     }
 
     @Override
-    public void loadAfter(@NonNull LoadParams<Integer> params, @NonNull LoadCallback<Integer, Item> callback) {
+    public void loadAfter(@NonNull final LoadParams<Integer> params, @NonNull final LoadCallback<Integer, Item> callback) {
+        RetrofitClient.getInstance()
+                .getApi()
+                .getAnswers(params.key, 15, "stackoverflow")
+                .enqueue(new Callback<StackApiResponse>() {
+                    @Override
+                    public void onResponse(Call<StackApiResponse> call, Response<StackApiResponse> response) {
+                        callback.onResult(response.body().getItems(), params.key + 1);
+                    }
 
+                    @Override
+                    public void onFailure(Call<StackApiResponse> call, Throwable t) {
+
+                    }
+                });
     }
 }
