@@ -1,7 +1,14 @@
 package net.simplifiedcoding.androidpagingexample;
 
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProvider;
+import android.arch.lifecycle.ViewModelProviders;
+import android.arch.paging.PagedList;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.widget.Toast;
 
 import retrofit2.Call;
@@ -12,31 +19,28 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
 
+    private RecyclerView recyclerView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://api.stackexchange.com/2.2/")
-                .addConverterFactory(GsonConverterFactory.create()) //Here we are using the GsonConverterFactory to directly convert json data to object
-                .build();
+        recyclerView = findViewById(R.id.recyclerview);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setHasFixedSize(true);
 
-        Api api = retrofit.create(Api.class);
+        ItemViewModel itemViewModel = ViewModelProviders.of(this).get(ItemViewModel.class);
 
-        Call<StackApiResponse> call = api.getAnswers(1, 15, "stackoverflow");
+        final ItemAdapter adapter = new ItemAdapter(this);
 
-        call.enqueue(new Callback<StackApiResponse>() {
+        itemViewModel.itemPagedList.observe(this, new Observer<PagedList<Item>>() {
             @Override
-            public void onResponse(Call<StackApiResponse> call, Response<StackApiResponse> response) {
-                int r = response.body().getItems().size();
-                Toast.makeText(MainActivity.this, r + " ", Toast.LENGTH_LONG).show();
-            }
-
-            @Override
-            public void onFailure(Call<StackApiResponse> call, Throwable t) {
-
+            public void onChanged(@Nullable PagedList<Item> items) {
+                adapter.submitList(items);
             }
         });
+
+        recyclerView.setAdapter(adapter);
     }
 }
